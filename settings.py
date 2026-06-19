@@ -8,4 +8,11 @@ gamma_b = 9.8321863685
 gnss_file = "GNSS.txt"
 imu_file = "IMU.txt"
 
+gnss_hz = 1.0
+imu_hz = 400.0
+
 lat_lon_plotting_bounds = [15.42, 15.4305, 46.9835, 46.9765, ]
+
+still_gyr_threshold = 0.8
+still_acc_threshold = 0.6
+min_still_time = 10.0
