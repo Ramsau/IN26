@@ -1,5 +1,6 @@
 a = 6378137.0
 f = 1.0/298.257223563
+b = a*(1-f)
 omega_e = 7.292115e-5
 GM = 3.986004418e14
 gamma_a = 9.7833267715
@@ -16,3 +17,6 @@ lat_lon_plotting_bounds = [15.42, 15.4305, 46.9835, 46.9765, ]
 still_gyr_threshold = 0.8
 still_acc_threshold = 0.6
 min_still_time = 10.0
+still_time_margin = 0.5
+
+coarse_alignment_time = 5.0
