@@ -24,4 +24,7 @@ still_acc_threshold = 0.6
 min_still_time = 10.0
 still_time_margin = 5.0
 
-coarse_alignment_time = 10.0
+coarse_alignment_time = 30.0
+
+phi_iteration_epsilon = 1e-5
+h_iteration_epsilon = 1e-3
