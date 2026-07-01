@@ -13,19 +13,22 @@ def read_gnss():
 
 def plot_gnss(gnss_data, reference_data=None):
     cimgt_request = cimgt.OSM()
+    plt.figure(figsize=(10, 10))
     ax = plt.axes(projection=cimgt_request.crs)
     ax.set_extent(settings.lat_lon_plotting_bounds)
     ax.add_image(cimgt_request, 16)
 
-    plt.plot(gnss_data[:, 2], gnss_data[:, 1], transform=ccrs.Geodetic(), linewidth=0.8, color='red', label='GNSS track')
-    if reference_data is not None:
-        plt.plot(reference_data[:, 2], reference_data[:, 1], transform=ccrs.Geodetic(), linewidth=0.8, color='blue', label='Reference track')
 
     gl = ax.gridlines(draw_labels=True)
     gl.top_labels = False
     gl.right_labels = False
 
-    plt.title('GNSS Track')
+    if reference_data is not None:
+        plt.plot(reference_data[:, 2], reference_data[:, 1], transform=ccrs.Geodetic(), linewidth=1.0, color='C1', label='GNSS')
+
+    plt.plot(gnss_data[:, 2], gnss_data[:, 1], transform=ccrs.Geodetic(), linewidth=1.0, color='C0', label='Strapdown')
+
+    plt.title('Trajektorie')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
     plt.legend()
@@ -44,10 +47,10 @@ def read_imu():
     return imu_data
 
 
-def plot_imu(imu_data, still_ranges=[]):
-    time = imu_data[:, 0] - imu_data[0, 0]
+def plot_imu(imu_data, still_ranges=[], min_time=None, max_time=None):
+    time = imu_data[:, 0] - settings.min_plotting_time
 
-    fig, axes = plt.subplots(2, 1, figsize=(36, 24), sharex=True)
+    fig, axes = plt.subplots(2, 1, figsize=(6, 4), sharex=True)
 
     axes[0].plot(time, imu_data[:, 1], linewidth=0.8, color='red', label='Gyro X')
     axes[0].plot(time, imu_data[:, 2], linewidth=0.8, color='green', label='Gyro Y')
@@ -61,10 +64,12 @@ def plot_imu(imu_data, still_ranges=[]):
     axes[1].plot(time, imu_data[:, 5], linewidth=0.8, color='green', label='Akz Y')
     axes[1].plot(time, imu_data[:, 6], linewidth=0.8, color='blue', label='Akz Z')
     axes[1].set_title('Beschleunigung')
-    axes[1].set_xlabel('Time [s]')
+    axes[1].set_xlabel('Zeit [s]')
     axes[1].set_ylabel('m/s^2')
     axes[1].grid(True)
     axes[1].legend()
+
+    axes[0].set_xlim(min_time, max_time)
 
     for still_range in still_ranges:
         axes[0].axvspan(still_range[0] - imu_data[0, 0], still_range[1]  - imu_data[0, 0], color='gray', alpha=0.2)
@@ -78,26 +83,40 @@ def simple_plot(data):
     ax.plot(data, linewidth=0.8)
     plt.show()
 
-def single_plot(data, xmin=None, xmax=None, ymin=None, ymax=None):
-    fig, ax = plt.subplots()
-    ax.plot(data[:, 0], data[:, 1], linewidth=0.8)
+def single_plot(data, xmin=None, xmax=None, ymin=None, ymax=None, title=None, xlabel=None, ylabel=None):
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.plot(data[:, 0] - settings.min_plotting_time, data[:, 1], linewidth=0.8)
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
     plt.show()
 
-def triple_plot(data):
+def double_plot(data_a, data_b, xmin=None, xmax=None, ymin=None, ymax=None, title=None, xlabel=None, ylabel=None, label_a=None, label_b=None):
     fig, ax = plt.subplots()
-    ax.plot(data[:, 0], linewidth=0.8, color='red')
-    ax.plot(data[:, 1], linewidth=0.8, color='green')
-    ax.plot(data[:, 2], linewidth=0.8, color='blue')
-    plt.show()
-
-def double_plot(data_a, data_b, xmin=None, xmax=None, ymin=None, ymax=None):
-    fig, ax = plt.subplots()
-    ax.plot(data_a[:, 0], data_a[:, 1], linewidth=0.4, color='red')
-    ax.plot(data_b[:, 0], data_b[:, 1], linewidth=0.4, color='blue')
+    ax.plot(data_a[:, 0] - settings.min_plotting_time, data_a[:, 1], linewidth=0.8, color='C1')
+    ax.plot(data_b[:, 0] - settings.min_plotting_time, data_b[:, 1], linewidth=0.8, color='C0')
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.legend([label_a, label_b])
+    plt.show()
+
+
+def triple_plot(data_a, data_b, data_c, xmin=None, xmax=None, ymin=None, ymax=None, title=None, xlabel=None, ylabel=None, label_a=None, label_b=None, label_c=None):
+    fig, ax = plt.subplots()
+    ax.plot(data_a[:, 0] - settings.min_plotting_time, data_a[:, 1], linewidth=0.8, color='red')
+    ax.plot(data_b[:, 0] - settings.min_plotting_time, data_b[:, 1], linewidth=0.8, color='green')
+    ax.plot(data_c[:, 0] - settings.min_plotting_time, data_c[:, 1], linewidth=0.8, color='blue')
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.legend([label_a, label_b, label_c])
     plt.show()
 
 def process_imu(imu_data, window_time, function):
@@ -194,7 +213,7 @@ def coarse_alignment(imu_b_data, data_range, g_0, phi_0, lambda_0):
         settings.omega_e * np.cos(phi_0),
         0,
         - settings.omega_e * np.sin(phi_0),
-        ])
+    ])
     c_l = np.cross(g_l, omega_ie_l)
     assert g_l.shape == omega_ie_l.shape == c_l.shape == (3, )
 
@@ -214,6 +233,11 @@ def coarse_alignment(imu_b_data, data_range, g_0, phi_0, lambda_0):
     roll_avg = np.average(roll[avg_start_idx:])
     pitch_avg = np.average(pitch[avg_start_idx:])
     yaw_avg = np.average(yaw[avg_start_idx:])
+
+    roll_std = np.std(roll[avg_start_idx:])
+    pitch_std = np.std(pitch[avg_start_idx:])
+    yaw_std = np.std(yaw[avg_start_idx:])
+
 
     # re-construct clean R_b_l from roll, pitch, yaw (now a single matrix)
     R_b_l_0 = (np.array([
@@ -246,6 +270,8 @@ def coarse_alignment(imu_b_data, data_range, g_0, phi_0, lambda_0):
     return (
         R_b_l_0,
         acc_factor,
+        pitch, roll, yaw,
+        pitch_std, roll_std, yaw_std,
     )
 
 def llh_to_ecef(phi, lamda, h):
@@ -255,7 +281,7 @@ def llh_to_ecef(phi, lamda, h):
         (N + h) * np.cos(phi) * np.cos(lamda),
         (N + h) * np.cos(phi) * np.sin(lamda),
         ((settings.b ** 2 / settings.a ** 2) * N + h) * np.sin(phi),
-        ])
+    ])
 
 def ecef_to_llh(xyz):
     if np.any(np.isnan(xyz)):
@@ -376,7 +402,7 @@ def strapdown(imu_data, still_ranges, x_e_0, R_b_l_0, acc_factor):
                 (dllh_e[k, 1] + settings.omega_e) * np.cos(llh_e[k, 0]),
                 -dllh_e[k, 0],
                 -(dllh_e[k, 1] + settings.omega_e) * np.sin(llh_e[k, 0]),
-                ])
+            ])
             Omega_il_l = rot_vector_to_array(w_il_l[k])
             Omega_ib_b = rot_vector_to_array(w_ib_b[k])
             Omega_lb_b = Omega_ib_b - R_b_l[k].T @ Omega_il_l @ R_b_l[k]
@@ -402,7 +428,7 @@ def strapdown(imu_data, still_ranges, x_e_0, R_b_l_0, acc_factor):
                 settings.omega_e * np.cos(llh_e[k, 0]),
                 0,
                 - settings.omega_e * np.sin(llh_e[k, 0]),
-                ])
+            ])
             f_cor_l[k] = np.cross(-(w_il_l[k] + w_ie_l), v_e_l[k])
 
             # step 5 - compute acceleration and speed
@@ -414,7 +440,7 @@ def strapdown(imu_data, still_ranges, x_e_0, R_b_l_0, acc_factor):
                 -np.sin(llh_e[k, 0]) * np.cos(llh_e[k, 1]),
                 -np.sin(llh_e[k, 0]) * np.sin(llh_e[k, 1]),
                 np.cos(llh_e[k, 0]),
-                ])
+            ])
             east_e = np.array([
                 -np.sin(llh_e[k, 1]),
                 np.cos(llh_e[k, 1]),
@@ -424,7 +450,7 @@ def strapdown(imu_data, still_ranges, x_e_0, R_b_l_0, acc_factor):
                 -np.cos(llh_e[k, 0]) * np.cos(llh_e[k, 1]),
                 -np.cos(llh_e[k, 0]) * np.sin(llh_e[k, 1]),
                 -np.sin(llh_e[k, 0]),
-                ])
+            ])
             R_l_e[k] = np.array([north_e, east_e, down_e]).T
 
             v_e_e[k + 1] = R_l_e[k] @ v_e_l[k + 1]
@@ -451,39 +477,39 @@ def strapdown(imu_data, still_ranges, x_e_0, R_b_l_0, acc_factor):
 def visualize_strapdown(R_b_l, dR_b_l, x_e, v_e_l, v_e_e, llh_e, dllh_e,
                         f_l, g_l, f_cor_l, w_il_l, w_lb_b, theta_lb_b, R_l_e,
                         strapdown_llh_plottable, imu_data, gnss_data):
-    print("force local")
-    single_plot(np.stack([imu_data[:, 0], f_l[:, 0]]).T, ymin=-0.025, ymax=0.025)
-    single_plot(np.stack([imu_data[:, 0], f_l[:, 1]]).T, ymin=-0.1, ymax=0.1)
-    single_plot(np.stack([imu_data[:, 0], f_l[:, 2]]).T)
-    print("gravity")
-    single_plot(np.stack([imu_data[:, 0], g_l[:, 2]]).T, ymin=9.7, ymax=9.9)
-    print("coriolis")
-    single_plot(np.stack([imu_data[:, 0], f_cor_l[:, 0]]).T,)
-    single_plot(np.stack([imu_data[:, 0], f_cor_l[:, 1]]).T,)
-    single_plot(np.stack([imu_data[:, 0], f_cor_l[:, 2]]).T,)
-    print("force corrected")
-    single_plot(np.stack([imu_data[:, 0], f_l[:, 2] + g_l[:, 2] + f_cor_l[:, 2]]).T, ymin=-0.1, ymax=0.1)
-
-    print("speed local")
-    single_plot(np.stack([imu_data[:, 0], v_e_l[:, 0]]).T)
-    single_plot(np.stack([imu_data[:, 0], v_e_l[:, 1]]).T)
-    single_plot(np.stack([imu_data[:, 0], v_e_l[:, 2]]).T)
-    print("speed global")
-    single_plot(np.stack([imu_data[:, 0], v_e_e[:, 0]]).T)
-    single_plot(np.stack([imu_data[:, 0], v_e_e[:, 1]]).T)
-    single_plot(np.stack([imu_data[:, 0], v_e_e[:, 2]]).T)
-    print("position ecef")
-    single_plot(np.stack([imu_data[:, 0], x_e[:, 0]]).T)
-    single_plot(np.stack([imu_data[:, 0], x_e[:, 1]]).T)
-    single_plot(np.stack([imu_data[:, 0], x_e[:, 2]]).T)
-    print("distance from earth center")
-    single_plot(np.stack([imu_data[:, 0], np.linalg.norm(x_e, axis=1)]).T)
-
-    print("R_l_e rpy")
-    R_l_e_rpy = rot_matrix_to_rpy(R_l_e.transpose(1, 2, 0)).T
-    double_plot(np.stack([imu_data[:, 0], 180 - R_l_e_rpy[:, 0] * 180 / np.pi]).T, gnss_data[:, [0, 2]] * np.nan)
-    double_plot(np.stack([imu_data[:, 0], -R_l_e_rpy[:, 1] * 180 / np.pi]).T, gnss_data[:, [0, 1]] * np.nan)
-    double_plot(np.stack([imu_data[:, 0], -R_l_e_rpy[:, 2] * 180 / np.pi]).T, gnss_data[:, [0, 1]] * np.nan)
+    # print("force local")
+    # single_plot(np.stack([imu_data[:, 0], f_l[:, 0]]).T, ymin=-0.025, ymax=0.025)
+    # single_plot(np.stack([imu_data[:, 0], f_l[:, 1]]).T, ymin=-0.1, ymax=0.1)
+    # single_plot(np.stack([imu_data[:, 0], f_l[:, 2]]).T)
+    # print("gravity")
+    # single_plot(np.stack([imu_data[:, 0], g_l[:, 2]]).T, ymin=9.7, ymax=9.9)
+    # print("coriolis")
+    # single_plot(np.stack([imu_data[:, 0], f_cor_l[:, 0]]).T,)
+    # single_plot(np.stack([imu_data[:, 0], f_cor_l[:, 1]]).T,)
+    # single_plot(np.stack([imu_data[:, 0], f_cor_l[:, 2]]).T,)
+    # print("force corrected")
+    # single_plot(np.stack([imu_data[:, 0], f_l[:, 2] + g_l[:, 2] + f_cor_l[:, 2]]).T, ymin=-0.1, ymax=0.1)
+    #
+    # print("speed local")
+    # single_plot(np.stack([imu_data[:, 0], v_e_l[:, 0]]).T)
+    # single_plot(np.stack([imu_data[:, 0], v_e_l[:, 1]]).T)
+    # single_plot(np.stack([imu_data[:, 0], v_e_l[:, 2]]).T)
+    # print("speed global")
+    # single_plot(np.stack([imu_data[:, 0], v_e_e[:, 0]]).T)
+    # single_plot(np.stack([imu_data[:, 0], v_e_e[:, 1]]).T)
+    # single_plot(np.stack([imu_data[:, 0], v_e_e[:, 2]]).T)
+    # print("position ecef")
+    # single_plot(np.stack([imu_data[:, 0], x_e[:, 0]]).T)
+    # single_plot(np.stack([imu_data[:, 0], x_e[:, 1]]).T)
+    # single_plot(np.stack([imu_data[:, 0], x_e[:, 2]]).T)
+    # print("distance from earth center")
+    # single_plot(np.stack([imu_data[:, 0], np.linalg.norm(x_e, axis=1)]).T)
+    #
+    # print("R_l_e rpy")
+    # R_l_e_rpy = rot_matrix_to_rpy(R_l_e.transpose(1, 2, 0)).T
+    # double_plot(np.stack([imu_data[:, 0], 180 - R_l_e_rpy[:, 0] * 180 / np.pi]).T, gnss_data[:, [0, 2]] * np.nan)
+    # double_plot(np.stack([imu_data[:, 0], -R_l_e_rpy[:, 1] * 180 / np.pi]).T, gnss_data[:, [0, 1]] * np.nan)
+    # double_plot(np.stack([imu_data[:, 0], -R_l_e_rpy[:, 2] * 180 / np.pi]).T, gnss_data[:, [0, 1]] * np.nan)
 
     plot_gnss(strapdown_llh_plottable[::10], reference_data=gnss_data)
     print("height")
@@ -522,15 +548,16 @@ def main():
     print(f"Initial gravity: {g_0}")
 
     # coarse alignment, along with acceleration factor
-    R_b_l_0, acc_factor = coarse_alignment(imu_b_01hz, [still_ranges[0][0], still_ranges[0][1]], g_0, phi_0, lambda_0)
+    (R_b_l_0, acc_factor, pitch_array, roll_array, yaw_array,
+     pitch_std, roll_std, yaw_std) = coarse_alignment(imu_b_01hz, [still_ranges[0][0], still_ranges[0][1]], g_0, phi_0, lambda_0)
     pitch_init = np.arcsin(-R_b_l_0[2, 0])
     roll_init = np.arctan2(R_b_l_0[2, 1], R_b_l_0[2, 2])
     yaw_init = np.arctan2(R_b_l_0[1, 0], R_b_l_0[0, 0])
 
     print("Coarse alignment")
-    print(f"Initial roll: {roll_init}")
-    print(f"Initial pitch: {pitch_init}")
-    print(f"Initial yaw: {yaw_init}")
+    print(f"Initial roll: {roll_init * 180 / np.pi}, std dev: {roll_std * 180 / np.pi}/{np.std(roll_array) * 180 / np.pi}")
+    print(f"Initial pitch: {pitch_init * 180 / np.pi}, std dev: {pitch_std * 180 / np.pi}/{np.std(pitch_array) * 180 / np.pi}")
+    print(f"Initial yaw: {yaw_init * 180 / np.pi}, std dev: {yaw_std * 180 / np.pi}/{np.std(yaw_array) * 180 / np.pi}")
     print(f"Acceleration factor: {acc_factor}")
 
     # prepare initial ecef point for strapdown
@@ -547,6 +574,21 @@ def main():
     visualize_strapdown(R_b_l, dR_b_l, x_e, v_e_l, v_e_e, llh_e, dllh_e,
                         f_l, g_l, f_cor_l, w_il_l, w_lb_b, theta_lb_b, R_l_e,
                         strapdown_llh_plottable, imu_b_strapdown, gnss_data)
+
+
+    # compute comparison to reference
+    gnss_time_indices = np.argmin(np.abs(imu_b_strapdown[:, 0][:, None] - gnss_data[:, 0][None, :]), axis=0)
+
+    reference_diff = np.abs(gnss_data - strapdown_llh_plottable[gnss_time_indices])[:-1]
+    print(f"Reference difference [llh]: {np.average(reference_diff, axis=0)[1:]}")
+
+    gnss_ecef = llh_to_ecef(gnss_data[:, 1] / 180 * np.pi, gnss_data[:, 2] / 180 * np.pi, gnss_data[:, 3]).T
+
+    reference_diff_ecef = np.abs(gnss_ecef - x_e[gnss_time_indices])[:-1]
+    reference_distance = np.linalg.norm(reference_diff_ecef, axis=1)
+    print("Average distance from ECEF: ", np.average(reference_distance))
+    print("Maximum distance from ECEF: ", np.max(reference_distance))
+    print("Final distance from ECEF: ", reference_distance[-1])
 
 
 if __name__ == '__main__':
